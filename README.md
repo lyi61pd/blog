@@ -57,6 +57,10 @@ deploy:
   branch: main # 或 master
 
 ```
+新增文章
+```
+hexo new "我的第一篇文章"
+```
 
 部署到github
 
