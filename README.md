@@ -66,6 +66,7 @@ hexo new "我的第一篇文章"
 
 ```plain
 git clone -b master https://github.com/jerryc127/hexo-theme-butterfly.git themes/butterfly
+python3 sync_images_to_local.py
 hexo clean && hexo generate && hexo deploy
 ```
 

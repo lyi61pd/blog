@@ -1,6 +1,8 @@
 ---
 title: Redis
 date: 2025-04-03
+tags:
+    - Redis
 ---
 
 # I/O多路复用是什么
