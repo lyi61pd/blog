@@ -71,11 +71,7 @@ gcc title.c -o title
 
 ![](/blog_imgs/Linux延迟绑定/1744249758419-7eb479dc-c5a7-480c-b6c9-5e819fc619dc.png)
 
-![](/home/pudding/.config/Typora/typora-user-images/image-20220927081955353.png)
-
 ![](/blog_imgs/Linux延迟绑定/1744249762197-97ee9ea1-40e2-4e94-9614-7c13c154a324.png)
-
-![](/home/pudding/.config/Typora/typora-user-images/image-20220927081932074.png)
 
 ### 部分寄存器以及部分汇编指令
 
@@ -187,15 +183,15 @@ jmp plt表第一行指令
 
 ### 延迟绑定机制下,函数初次调用流程图
 
-![](/home/pudding/.config/Typora/typora-user-images/image-20221227175617070.png)![](/blog_imgs/Linux延迟绑定/1744249859364-e8ace29f-3caf-46ab-b72d-b8a6a9abdab5.png)
+![](/blog_imgs/Linux延迟绑定/1744249859364-e8ace29f-3caf-46ab-b72d-b8a6a9abdab5.png)
 
 ### IDA 查看 PLT 表
 
-![](/home/pudding/.config/Typora/typora-user-images/image-20221227180005879.png)![](/blog_imgs/Linux延迟绑定/1744249774986-45335481-e777-4191-9e00-c872f5da5f7a.png)
+![](/blog_imgs/Linux延迟绑定/1744249774986-45335481-e777-4191-9e00-c872f5da5f7a.png)
 
 ### IDA 查看 GOT 表
 
-![](/home/pudding/.config/Typora/typora-user-images/image-20221227180052673.png)![](/blog_imgs/Linux延迟绑定/1744249779063-2d695725-69ae-4ddb-9ac7-3550bf6799f5.png)
+![](/blog_imgs/Linux延迟绑定/1744249779063-2d695725-69ae-4ddb-9ac7-3550bf6799f5.png)
 
 ### .plt     .got    .got.plt
 
@@ -209,7 +205,7 @@ jmp plt表第一行指令
 
 PLT 表指向的是.got.plt
 
-printf@plt 指向的就是 printf[@got.plt ](/got.plt)
+printf@plt 指向的就是 printf@got.plt
 
 第一次调用时printf@got.plt里指向的是 printf@plt 的下一行也就是 push printf 对应的 got 表里的序号
 
