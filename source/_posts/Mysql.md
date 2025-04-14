@@ -1418,5 +1418,571 @@ auto_increment_offset=2  -- 主库2
 
 ---
 
+# 存储过程
+## 什么是存储过程？
+存储过程就是：
 
+一段**事先定义好、存储在数据库中**的 SQL 代码，可以像函数一样被调用。
+
+常用于：
+
++ 封装复杂的业务逻辑（如多表联合处理）
++ 实现一些批量处理任务
++ 降低客户端与数据库之间的通信成本
+
+写一次，可以在多个地方复用，还能避免把复杂 SQL 写死在业务代码中。
+
+---
+
+## 创建存储过程的基本语法
+```sql
+DELIMITER //
+
+CREATE PROCEDURE proc_example()
+BEGIN
+  SELECT NOW();
+END //
+
+DELIMITER ;
+```
+
+解释说明：
+
++ `DELIMITER //` 是为了避免 `;` 被误当成语句结束符
++ `BEGIN ... END` 包裹逻辑体
++ `proc_example` 是过程名，可被调用
+
+调用方式：
+
+```sql
+CALL proc_example();
+```
+
+---
+
+## 参数类型支持
+存储过程支持 3 种参数类型：
+
++ `IN`：传入参数（默认）
++ `OUT`：返回结果用
++ `INOUT`：传入传出都可以
+
+示例：
+
+```sql
+CREATE PROCEDURE greet_user(IN username VARCHAR(50))
+BEGIN
+  SELECT CONCAT('Hello, ', username);
+END;
+```
+
+带返回值的例子：
+
+```sql
+CREATE PROCEDURE double_value(IN input INT, OUT result INT)
+BEGIN
+  SET result = input * 2;
+END;
+
+-- 调用方式（MySQL 变量用 @）
+CALL double_value(5, @res);
+SELECT @res;
+```
+
+---
+
+## 存储过程里的控制语句
+可以像写程序一样控制流程：
+
++ 条件判断：`IF ... THEN ... ELSE ... END IF`
++ 循环：`WHILE`、`LOOP`、`REPEAT`
++ 局部变量：`DECLARE`
+
+示例：
+
+```sql
+CREATE PROCEDURE loop_counter()
+BEGIN
+  DECLARE i INT DEFAULT 1;
+
+  WHILE i <= 5 DO
+    SELECT CONCAT('Loop ', i);
+    SET i = i + 1;
+  END WHILE;
+END;
+```
+
+---
+
+## 查看与删除存储过程
+查看已有存储过程：
+
+```sql
+SHOW PROCEDURE STATUS WHERE Db = '数据库名';
+```
+
+查看具体定义：
+
+```sql
+SHOW CREATE PROCEDURE proc_name;
+```
+
+删除存储过程：
+
+```sql
+DROP PROCEDURE IF EXISTS proc_name;
+```
+
+---
+
+## 使用存储过程的优缺点
+### 优点：
++ 提高代码复用性，避免重复 SQL
++ 执行速度快（预编译）
++ 减少应用与数据库的通信频率
+
+### 缺点：
++ 可维护性较差（逻辑隐藏在数据库里）
++ 不利于版本控制（部署升级不方便）
++ 调试不如应用层灵活
++ 写法偏 SQL 风格，不如高级语言易写易读
+
+---
+
+## 适合使用存储过程的场景
++ 批量导入导出
++ 数据迁移、归档
++ 报表类查询逻辑封装
++ 和第三方数据库集成时对外暴露“数据库接口”
+
+---
+
+# 触发器
+一种 **基于事件驱动** 的数据库对象，当指定表发生某些操作（如插入、更新、删除）时，会**自动执行事先定义好的 SQL 逻辑**，无需应用显式调用。
+
+简单说，就是数据库自带的“监听器”。
+
+---
+
+## 触发器适合用在哪？
+常见场景：
+
++ 数据变动时自动记录日志
++ 自动补充派生字段（如更新订单状态时同步更新时间）
++ 做数据校验或限制（虽然现在推荐在应用层做）
++ 简单的数据同步（如将数据同时写入两张表）
+
+---
+
+## 支持哪些事件类型
+MySQL 支持 6 类触发事件：
+
+| 触发时机 | 操作类型 |
+| --- | --- |
+| BEFORE | INSERT、UPDATE、DELETE |
+| AFTER | INSERT、UPDATE、DELETE |
+
+
+注意：**每个表、每个操作类型、每个时机** 只能创建一个触发器。例如：一张表只能有一个 `AFTER INSERT` 触发器。
+
+---
+
+## 创建触发器的语法
+```sql
+DELIMITER //
+
+CREATE TRIGGER trg_after_insert_user
+AFTER INSERT ON users
+FOR EACH ROW
+BEGIN
+  INSERT INTO user_logs(user_id, action, created_at)
+  VALUES (NEW.id, 'insert', NOW());
+END //
+
+DELIMITER ;
+```
+
+说明：
+
++ `AFTER INSERT ON users` 表示在 `users` 表插入数据后触发
++ `FOR EACH ROW` 表示每插入一行就执行一次
++ `NEW` 代表新数据，`OLD` 代表旧数据（适用于 UPDATE 和 DELETE）
+
+---
+
+## 示例：UPDATE 时记录变更
+```sql
+CREATE TRIGGER trg_before_update_user
+BEFORE UPDATE ON users
+FOR EACH ROW
+BEGIN
+  INSERT INTO user_logs(user_id, action, old_name, new_name, changed_at)
+  VALUES (
+    OLD.id,
+    'update',
+    OLD.name,
+    NEW.name,
+    NOW()
+  );
+END;
+```
+
+在用户信息更新之前，自动把名字变更记录保存到 `user_logs`。
+
+---
+
+## 删除和查看触发器
+查看触发器：
+
+```sql
+SHOW TRIGGERS;
+```
+
+查看某个触发器定义：
+
+```sql
+SHOW CREATE TRIGGER trg_name;
+```
+
+删除触发器：
+
+```sql
+DROP TRIGGER IF EXISTS trg_name;
+```
+
+---
+
+## 常见问题与限制
+### 是否支持修改触发器？
+不支持 `ALTER TRIGGER`，只能 `DROP` 再 `CREATE`。
+
+### 是否支持事务？
+触发器执行是在事务中完成的。如果主操作回滚，触发器执行的内容也会被回滚。
+
+### 是否能在触发器中调用存储过程？
+可以调用，但建议避免太复杂的逻辑，防止性能问题或死锁。
+
+### 是否支持对视图使用触发器？
+不支持，触发器只能应用在 **基表** 上，不能绑定到视图或临时表。
+
+### 是否可以控制触发顺序？
+不可以。MySQL 不支持同一类事件的多个触发器（不像 Oracle / PostgreSQL 那样可以定义多个并排序）。
+
+---
+
+## 使用触发器的建议
++ 尽量保持触发逻辑简单、快速
++ 加入异常处理，防止触发器失败导致主操作失败
++ 避免级联触发（一个触发器再触发另一个），否则调试困难
++ 用于**审计日志**、**数据归档** 是较好的应用场景
+
+---
+
+# 事件调度器
+事件调度器（Event Scheduler）是一种 MySQL 内置的 **定时执行 SQL 语句** 的机制，可以在指定时间点或时间间隔自动运行某段 SQL，不依赖外部应用或操作系统。
+
+它有点像数据库版本的 `crontab`，但是写在数据库里的。
+
+---
+
+## 使用事件调度器的前提：先开启它
+默认可能是关闭状态，可以通过以下方式开启：
+
+### 查看当前状态
+```sql
+SHOW VARIABLES LIKE 'event_scheduler';
+```
+
+如果返回 `OFF`，说明没开。
+
+### 启用方式（临时）
+```sql
+SET GLOBAL event_scheduler = ON;
+```
+
+### 启用方式（永久）
+在配置文件（如 `my.cnf`）中添加：
+
+```plain
+event_scheduler = ON
+```
+
+---
+
+## 创建事件的基本语法
+```sql
+CREATE EVENT IF NOT EXISTS event_clear_logs
+ON SCHEDULE EVERY 1 DAY
+STARTS CURRENT_TIMESTAMP + INTERVAL 1 HOUR
+DO
+  DELETE FROM user_logs WHERE created_at < NOW() - INTERVAL 30 DAY;
+```
+
+解释：
+
++ `ON SCHEDULE EVERY 1 DAY`：每 1 天执行一次
++ `STARTS` 指定起始时间（可选）
++ `DO` 后面是要执行的 SQL 语句
+
+这条语句的作用是：每天清理一次 30 天前的日志。
+
+---
+
+## 常用的调度方式
+### 1. 每隔固定时间执行一次
+```sql
+ON SCHEDULE EVERY 10 MINUTE
+```
+
+### 2. 固定时间点执行一次（只执行一次）
+```sql
+ON SCHEDULE AT TIMESTAMP '2025-04-11 00:00:00'
+```
+
+### 3. 设置结束时间（任务失效）
+```sql
+ENDS CURRENT_TIMESTAMP + INTERVAL 30 DAY
+```
+
+---
+
+## 启用、禁用和删除事件
+### 启用事件（默认创建时是 ENABLED）
+```sql
+ALTER EVENT event_clear_logs ENABLE;
+```
+
+### 禁用事件
+```sql
+ALTER EVENT event_clear_logs DISABLE;
+```
+
+### 删除事件
+```sql
+DROP EVENT IF EXISTS event_clear_logs;
+```
+
+---
+
+## 示例：每小时检查超时订单并更新状态
+```sql
+CREATE EVENT check_timeout_orders
+ON SCHEDULE EVERY 1 HOUR
+DO
+  UPDATE orders
+  SET status = 'expired'
+  WHERE status = 'pending' AND created_at < NOW() - INTERVAL 2 HOUR;
+```
+
+---
+
+## 事件调度器适合哪些任务？
++ 自动清理过期数据
++ 定时归档、备份表数据
++ 批量状态更新（如标记过期订单、失效优惠券）
++ 生成日报、统计表数据等
+
+---
+
+# 备份恢复
+`mysqldump` 是 MySQL 提供的一个命令行工具，用于备份 MySQL 数据库的内容。它可以导出数据库中的表、数据和结构，并生成 SQL 脚本，可以用于恢复数据或迁移数据。下面是常见的 `mysqldump` 使用方法。
+
+## 备份
+```bash
+mysqldump -u 用户名 -p 数据库名 > 备份文件.sql
+```
+
+其中：
+
++ `-u`：指定 MySQL 用户名。
++ `-p`：提示输入密码（密码不需要在命令中直接输入，`-p` 后不接密码，执行后会提示你输入密码）。
++ `数据库名`：要备份的数据库名称。
++ `备份文件.sql`：备份文件保存的路径和文件名。
+
+
+
+**备份单个数据库**
+
+```bash
+mysqldump -u root -p my_database > my_database_backup.sql
+```
+
+这条命令将备份名为 `my_database` 的数据库，备份文件保存为 `my_database_backup.sql`。
+
+
+
+**备份多个数据库**
+
+```bash
+mysqldump -u root -p --databases db1 db2 db3 > backup.sql
+```
+
+此命令将备份 `db1`、`db2` 和 `db3` 这三个数据库，备份数据会合并到 `backup.sql` 中。
+
+
+
+**备份所有数据库**
+
+```bash
+mysqldump -u root -p --all-databases > all_databases_backup.sql
+```
+
+此命令备份所有 MySQL 数据库。
+
+
+
+**只备份数据库结构（不包含数据）**
+
+```bash
+mysqldump -u root -p -d my_database > my_database_structure.sql
+```
+
+`-d` 选项表示只备份数据库的结构（表结构、视图、存储过程等），不备份数据。
+
+****
+
+**备份某个表**
+
+```bash
+mysqldump -u root -p my_database my_table > my_table_backup.sql
+```
+
+此命令将备份 `my_database` 数据库中的 `my_table` 表。
+
+****
+
+**包含触发器和事件**
+
+```bash
+mysqldump -u root -p --routines --triggers --events my_database > my_database_with_triggers.sql
+```
+
+使用 `--routines`、`--triggers` 和 `--events` 选项可以将触发器、存储过程/函数以及事件一起备份。
+
+****
+
+**压缩备份文件**
+
+```bash
+mysqldump -u root -p my_database | gzip > my_database_backup.sql.gz
+```
+
+这条命令将备份数据压缩成 `.gz` 格式，以节省磁盘空间。
+
+## 恢复
+使用 `mysqldump` 导出的 SQL 文件可以通过 `mysql` 命令来恢复：
+
+```bash
+mysql -u 用户名 -p 数据库名 < 备份文件.sql
+```
+
+例如，恢复 `my_database_backup.sql` 文件到数据库 `my_database`：
+
+```bash
+mysql -u root -p my_database < my_database_backup.sql
+```
+
+## 其他常用选项
++ `--no-tablespaces`：避免导出表空间信息。
++ `--single-transaction`：确保导出时不锁表，适用于 InnoDB 存储引擎。
++ `--quick`：在导出大数据时，逐行读取数据，避免内存消耗过多。
+
+# 与文件系统交互
+**MySQL 可以与文件系统进行交互**，但能力是有限的，且带有一定安全风险。主要支持的交互方式包括：
+
++ 读文件（如导入 CSV、读取文本）
++ 写文件（如导出查询结果、写日志）
+
+---
+
+## 常见文件操作方式
+### 从文件读取数据（导入）
+使用 `LOAD DATA INFILE` 读取文本文件的数据插入表中：
+
+```sql
+LOAD DATA INFILE '/path/to/data.csv'
+INTO TABLE my_table
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES;
+```
+
+说明：
+
++ 支持读取 CSV、TSV 等纯文本格式
++ 需要文件在 **数据库服务器本地磁盘**
++ 需要开启 `local_infile` 选项（否则报错）
+
+查看配置：
+
+```sql
+SHOW VARIABLES LIKE 'local_infile';
+```
+
+启用：
+
+```sql
+SET GLOBAL local_infile = 1;
+```
+
+### 将查询结果写入文件（导出）
+```sql
+SELECT * FROM users
+INTO OUTFILE '/tmp/users_export.csv'
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
+```
+
+限制：
+
++ 路径必须是 **服务器上的绝对路径**
++ 目标文件 **不能存在**（否则报错）
++ MySQL 进程必须有权限写入该路径
+
+---
+
+## 安全性限制说明
+出于安全考虑，MySQL 默认限制了文件操作能力：
+
+1. **只能操作服务器本地文件**
+2. `INTO OUTFILE` 不能覆盖已存在的文件
+3. 不支持写入任意目录，通常只能在 `secure_file_priv` 设置的路径中写
+
+查看该路径：
+
+```sql
+SHOW VARIABLES LIKE 'secure_file_priv';
+```
+
+如果结果是某个目录，只能在这个目录内进行读写操作。
+
+如果是空字符串，表示**可访问任意路径**（不推荐）
+
+如果是 `NULL`，表示完全禁用了文件导入导出。
+
+---
+
+## 用于日志或文本处理的函数
+MySQL 不支持动态操作文件系统，比如：
+
++ 不支持列出目录文件
++ 不支持创建文件、移动文件
++ 也不能直接在 SQL 中写系统命令
+
+但可以通过函数处理文本内容：
+
++ `LOAD_FILE('/path/to/file.txt')`：可以将服务器上的文本文件内容读入，返回字符串
++ 仅在 `secure_file_priv` 设置允许的路径下可用
+
+示例：
+
+```sql
+SELECT LOAD_FILE('/var/lib/mysql-files/notes.txt');
+```
+
+返回文件的全部文本内容（适合读配置、静态文本）。
+
+---
 
