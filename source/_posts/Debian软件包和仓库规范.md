@@ -522,7 +522,7 @@ Reverse Provides:
 ```
 
 ## apt仓库
-![](https://cdn.nlark.com/yuque/0/2024/png/22226417/1717638461674-32fc62bb-e337-4892-a0d9-150be8f36951.png)
+![](/blog_imgs/Debian软件包和仓库规范/1717638461674-32fc62bb-e337-4892-a0d9-150be8f36951.png)
 
 + <font style="color:rgb(0, 0, 0);">libgc 是源码包名</font>
 + <font style="color:rgb(0, 0, 0);">libgc-dev_7.6.4.2-2+dde_amd64.deb  是源码包编译出来的二进制包</font>
