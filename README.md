@@ -64,9 +64,39 @@ hexo new "我的第一篇文章"
 
 部署到github
 
+### 手动部署
 ```plain
 git clone -b master https://github.com/jerryc127/hexo-theme-butterfly.git themes/butterfly
 python3 sync_images_to_local.py
 hexo clean && hexo generate && hexo deploy
+```
+
+### 自动部署 (GitHub Actions)
+
+项目已配置 GitHub Actions，每次推送到 main/master 分支时会自动执行部署。
+
+**设置步骤：**
+
+1. 生成 SSH 密钥对：
+```bash
+ssh-keygen -t rsa -b 4096 -C "lyi61pd@gmail.com" -f ~/.ssh/deploy_key
+```
+
+2. 将公钥添加到目标仓库：
+   - 进入 `your-username.github.io` 仓库
+   - Settings → Deploy keys → Add deploy key
+   - 粘贴 `deploy_key.pub` 的内容，勾选 "Allow write access"
+
+3. 将私钥添加到源码仓库：
+   - 进入当前博客源码仓库
+   - Settings → Secrets and variables → Actions → New repository secret
+   - Name: `DEPLOY_KEY`
+   - Value: `deploy_key` 文件的内容
+
+4. 推送代码即可自动部署：
+```bash
+git add .
+git commit -m "update blog"
+git push origin main
 ```
 

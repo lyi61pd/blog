@@ -1,0 +1,94 @@
+name: Deploy Blog
+
+on:
+  push:
+    branches: [ main, master ]  # 当推送到 main 或 master 分支时触发
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: false # 如果使用了 git submodules，设置为 true
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # 如果有 requirements.txt 文件，安装依赖
+        if [ -f requirements.txt ]; then
+          pip install -r requirements.txt
+        fi
+        # 安装常用的 Python 库（图片处理可能需要）
+        pip install requests pillow
+        
+    - name: Install Node.js dependencies
+      run: |
+        # 先尝试 npm ci，如果失败则使用 npm install
+        npm ci || npm install
+        
+        # 检查并安装可能缺失的 Hexo 依赖
+        echo "检查并安装 Hexo 相关依赖..."
+        
+        # 安装渲染器
+        npm list hexo-renderer-pug || npm install hexo-renderer-pug --save
+        npm list hexo-renderer-stylus || npm install hexo-renderer-stylus --save
+        
+        # 安装生成器插件
+        npm list hexo-generator-search || npm install hexo-generator-search --save
+        npm list hexo-generator-feed || npm install hexo-generator-feed --save
+        npm list hexo-generator-sitemap || npm install hexo-generator-sitemap --save
+        npm list hexo-generator-searchdb || npm install hexo-generator-searchdb --save
+        
+        # 安装部署插件
+        npm list hexo-deployer-git || npm install hexo-deployer-git --save
+        
+        echo "依赖安装完成"
+      
+    - name: Setup Git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        
+    - name: Setup SSH key for deployment
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+        
+    - name: Sync images to local
+      run: |
+        if [ -f sync_images_to_local.py ]; then
+          echo "运行图片同步脚本..."
+          python3 sync_images_to_local.py
+        else
+          echo "未找到 sync_images_to_local.py 脚本，跳过图片同步"
+        fi
+      
+    - name: Clean and generate
+      run: |
+        echo "清理之前的生成文件..."
+        npx hexo clean
+        
+        echo "生成静态文件..."
+        npx hexo generate
+        
+    - name: Deploy
+      run: |
+        echo "开始部署..."
+        npx hexo deploy
+        echo "部署完成！"

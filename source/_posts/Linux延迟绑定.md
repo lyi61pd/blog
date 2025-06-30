@@ -37,7 +37,7 @@ ar rcx output.a test1.o test2.o
 //-------------------------------------------------------------------
 // FileName: test1.c
 // Author: hexuelin
-// Copyright (c) UnionTech.
+// Copyright (c) company***.
 //-------------------------------------------------------------------
 #include <stdio.h>
 void stack_overflow(){
@@ -169,7 +169,7 @@ printf 第一次调用的时候 got 表中是没有实际地址的， 第一次�
 举例：PLT 表中 printf[@plt ](/plt)
 
 ```plain
-jmp printf@got.plt
+jmp pr****@go***.plt
 push printf在got表中的编号
 jmp plt表第一行指令
 ```
@@ -205,7 +205,7 @@ jmp plt表第一行指令
 
 PLT 表指向的是.got.plt
 
-printf@plt 指向的就是 printf@got.plt
+printf@plt 指向的就是 pr****@go***.plt
 
 第一次调用时printf@got.plt里指向的是 printf@plt 的下一行也就是 push printf 对应的 got 表里的序号
 

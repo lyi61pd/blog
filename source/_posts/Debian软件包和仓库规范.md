@@ -370,7 +370,7 @@ deb-src http://site.example.com/debian distribution component1 component2 compon
 Package: apt
 Binary: apt, libapt-pkg5.0, libapt-inst2.0, apt-doc, libapt-pkg-dev, libapt-pkg-doc, apt-utils, apt-transport-https
 Version: 1.8.2.13-1
-Maintainer: APT Development Team <deity@lists.debian.org>
+Maintainer: APT Development Team <de***@li***.org>
 Build-Depends: cmake (>= 3.4), debhelper (>= 11.2~), docbook-xml, docbook-xsl, dpkg-dev (>= 1.17.14), g++ (>= 4:7), gettext (>= 0.12), googletest <!nocheck> | libgtest-dev <!nocheck>, libbz2-dev, libdb-dev, libgnutls28-dev (>= 3.4.6), liblz4-dev (>= 0.0~r126), liblzma-dev, libseccomp-dev [amd64 arm64 armel armhf i386 mips mips64el mipsel ppc64el s390x hppa powerpc powerpcspe ppc64 x32], libsystemd-dev [linux-any], libudev-dev [linux-any], libzstd-dev (>= 1.0), ninja-build, pkg-config, po4a (>= 0.34-2), xsltproc, zlib1g-dev
 Build-Depends-Indep: doxygen, graphviz, w3m
 Architecture: any all
@@ -400,7 +400,7 @@ Package-List:
  libapt-pkg5.0 deb libs optional arch=any
 Testsuite: autopkgtest
 Testsuite-Triggers: @builddeps@, aptitude, db-util, dpkg, fakeroot, gnupg, gnupg1, gnupg2, gpgv, gpgv1, gpgv2, libfile-fcntllock-perl, lsof, python3-apt, stunnel4, wget
-Uploaders: Michael Vogt <mvo@debian.org>, Julian Andres Klode <jak@debian.org>, David Kalnischkies <donkult@debian.org>
+Uploaders: Michael Vogt <m**@de***.org>, Julian Andres Klode <j**@de***.org>, David Kalnischkies <do*****@de***.org>
 Vcs-Browser: https://salsa.debian.org/apt-team/apt
 Vcs-Git: https://salsa.debian.org/apt-team/apt.git
 ```
